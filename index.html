@@ -1,0 +1,287 @@
+<!--This code sucks but it works-->
+
+<html lang="en">
+    <head>
+        <style>
+            * {
+                -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+            }
+
+            body { font-family: sans-serif; background-color: #333333}
+
+            #timer, #mouse-indicator {
+                color: white;
+            }
+
+            .grid-container {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+            }
+
+            /* ---- grid ---- */
+
+            .grid {
+                background: #444;
+                max-width: 930px;
+                min-height: 400px;
+                width: 75%;
+            }
+
+            .grid2 {
+                background: #266711;
+                max-width: 310px;
+                width: 25%;
+                min-height: 400px;
+            }
+
+            .grid2 .grid-item {
+                left: auto !important;
+            }
+
+            /* clearfix */
+            .grid:after {
+                content: '';
+                display: block;
+                clear: both;
+            }
+
+            /* ---- grid-item ---- */
+
+            .grid-item {
+                padding: 8px;
+                min-height: 100px;
+                width: 300px;
+                float: left;
+                background: #222;
+                color: #CCC;
+                border: 2px solid #333;
+                border-color: hsla(0, 0%, 0%, 0.5);
+                border-radius: 5px;
+                margin:5px;
+            }
+
+            .grid-item-row {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .grid-item-row span {
+                display: flex;
+                align-items: center;
+            }
+
+            .grid-item-row img {
+                margin-right: 4px;
+            }
+
+            .grid-item:hover {
+                background: #444;
+                border-color: white;
+                cursor: pointer;
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+        <script type="text/javascript">
+
+            let isMouseHover = false
+            let $grid;
+            let $grid2;
+            let countdown = 0;
+            let prependQueue = [];
+
+            function addElementCloneToGrid(grid, element) {
+                const clonedElement = element.cloneNode(true);
+                grid.prepend(clonedElement)
+                    .masonry( 'prepended', clonedElement )
+                    .masonry();
+            }
+
+            $(document).ready( function() {
+
+                localStorage.setItem("test", "testststts");
+
+                let test = document.getElementById("test");
+                let mouseIndicator = document.getElementById("mouse-indicator");
+                test.addEventListener("mouseleave", function (event) {
+                    isMouseHover = false
+                    mouseIndicator.textContent = "mouse out"
+                    let queueItems = prependQueue.splice(0)
+                    prependQueue = [];
+                    queueItems.forEach((item) => createCard(item));
+                }, false);
+                test.addEventListener("mouseover", function (event) {
+                    isMouseHover = true
+                    mouseIndicator.textContent = "mouse in"
+                }, false);
+
+                $grid = $('.grid').masonry({
+                    columnWidth: 310,
+                    itemSelector: '.grid-item',
+                    transitionDuration: '.1s'
+                });
+
+                $grid2 = $('.grid2').masonry({
+                    columnWidth: 310,
+                    itemSelector: '.grid-item',
+                    transitionDuration: '.1s'
+                });
+
+                // Move items from grid 1 to grid 2
+                $grid.on('click', '.grid-item', function() {
+                    // remove item
+                    $grid.masonry( 'remove', this )
+                        // trigger layout
+                        .masonry();
+
+                    addElementCloneToGrid($grid2, this)
+                })
+
+                $grid2.on('click', '.grid-item', function() {
+                    // remove item
+                    $grid2.masonry( 'remove', this )
+                        // trigger layout
+                        .masonry();
+
+                    addElementCloneToGrid($grid, this)
+                })
+
+                $grid.on('removeComplete', function( event, removedItems ) {
+                    console.log( 'Masonry remove complete with ' + removedItems.length + ' items' );
+                });
+
+            });
+
+            function createCard(item) {
+                let tempMessage = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin eget facilisis sapien. Pellentesque pulvinar rutrum est quis fringilla. Suspendisse tempor nibh sit amet sapien facilisis pharetra. Sed lorem dolor, porta. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin";
+                let message = tempMessage.substring(0, randomIntFromInterval(0, tempMessage.length - 20) + 20);
+
+                const rng = randomIntFromInterval(0, 5);
+                const member = rng === 0 ? "Member (X Months)" : " ";
+
+                const username = item.data.username;
+                const avatar = item.data.avatar;
+                const amount = "$" + item.data.amount;
+                const type = item.type;
+
+                const dataAttributes = 'data-username="' + username + '"' +
+                    'data-amount="' + amount + '"' +
+                    'data-message="' + message + '"' +
+                    'data-member="' + member + '"';
+
+                const txt2 = $("<div " + dataAttributes + " class=\"grid-item\">" +
+                        "<div class='grid-item-row'>" +
+                            "<span><img height='24px' width='24px' src='" + avatar + "'>" + username + "</span>" +
+                            "<span>" + amount + "</span>" +
+                        "</div>" +
+                        "<div class='grid-item-row'>" +
+                            "<span>" + member + "</span>" +
+                            "<span>" + type + "</span>" +
+                        "</div>" +
+                        "<p>" + message + "</p>" +
+                    "</div>");
+                $grid.prepend(txt2).masonry( 'prepended', txt2 ).masonry();
+            }
+
+            function getDonos() {
+                let url = "https://stoplight.io/mocks/streamelements/api-docs/75539/activities/5b2e2007760aeb7729487dab?after=0&before=1544178274000&limit=5&mincheer=0&minhost=0&minsub=0&mintip=0&origin=youtube&types=superchat";
+                $.get( url, function( data ) {
+
+                    // substring random data to make this look better
+                    const rng1 = randomIntFromInterval(1, 20);
+                    const rng2 = rng1 + randomIntFromInterval(1, 5);
+                    data = data.slice(rng1, rng2)
+
+                    console.log(data);
+                    if (isMouseHover) {
+                        // If the user is using the UI, wait until they aren't
+                        prependQueue.unshift(...data)
+                    } else {
+                        data.forEach((item) => createCard(item));
+                    }
+                });
+            }
+
+            function randomIntFromInterval(min, max) { // min and max included
+                return Math.floor(Math.random() * (max - min + 1) + min)
+            }
+
+            function createStreamElementsInterval() {
+
+                let goButton = document.getElementById("go-button")
+                goButton.disabled = true;
+
+                let timer = document.getElementById("timer")
+
+                setInterval(function () {
+                    if (countdown === 0) {
+                        countdown = 10;
+                        getDonos()
+                    } else {
+                        countdown -= 1;
+                    }
+                    timer.innerText = "Refreshing in " + countdown;
+                }, 1000);
+            }
+
+            function copyUnread() {
+                const elements = $grid.masonry('getItemElements');
+
+                let output = [];
+
+                elements.forEach((e) => {
+                    const username = e.dataset.username + "\n";
+                    const amount = e.dataset.amount + "\n";
+                    const message = e.dataset.message + "\n";
+                    const member = e.dataset.member.trim() === '' ? '' : e.dataset.member + "\n";
+                    output.push(username + member + amount + message);
+                });
+                output = output.join("\n");
+                navigator.clipboard.writeText(output);
+                console.log(output);
+            }
+
+            function deleteAll(gridParam) {
+                let grid = gridParam === 'unread' ? $grid : $grid2;
+
+                if(!confirm("Are you sure you want to delete ALL the " + gridParam + " donos?")) {
+                    return;
+                }
+
+                const elements = grid.masonry('getItemElements');
+                grid.masonry('remove', elements);
+            }
+
+        </script>
+        <title></title>
+    </head>
+    <body>
+        <input type="text">
+        <button id="go-button" onclick="createStreamElementsInterval()">Go</button>
+        <button onclick="getDonos()">Mock API</button>
+        <br>
+        <span>
+            <span id="timer">Waiting</span>
+            <span> /// </span>
+            <span id="mouse-indicator">Mouse indicator</span>
+        </span>
+        <br>
+        <button onclick="copyUnread()">Copy Unread to Clipboard</button>
+        <button onclick="deleteAll('unread')">Delete Unread</button>
+        <button onclick="deleteAll('read')">Delete Read</button>
+        <br>
+        <br>
+        <br>
+
+        <div class="grid-container">
+            <div id="test" class="grid">
+            </div>
+
+            <div class="grid2">
+            </div>
+        </div>
+
+    </body>
+</html>
